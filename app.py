@@ -28,7 +28,12 @@ def index():
         </style>
     </head>
     <body>
-        <iframe src="https://kinobox.tv/embed/#{{ kp_id }}" allowfullscreen></iframe>
+        <!-- Балансер KinoDivBox (замена Kinobox) -->
+        <iframe src="https://kinodivbox.github.io/iframe?id={{ kp_id }}" allowfullscreen></iframe>
+        
+        <!-- Если первый балансер будет тупить, удалите строку выше и раскомментируйте строку ниже: -->
+        <!-- <iframe src="https://kinoplayer.top/embed/kinopoisk/{{ kp_id }}" allowfullscreen></iframe> -->
+        
         <script>
             let currentKp = '{{ kp_id }}';
             setInterval(async () => {
@@ -59,11 +64,11 @@ def webhook():
 def set_webhook():
     bot.remove_webhook()
     bot.set_webhook(url=f"{HOST_URL}/{TELEGRAM_TOKEN}")
-    return "Webhook OK"
+    return f"Webhook настроен на: {HOST_URL}"
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Отправь ссылку или ID с Кинопоиска.")
+    bot.reply_to(message, "Отправь ссылку на фильм с Кинопоиска (или просто его ID).")
 
 @bot.message_handler(func=lambda msg: True)
 def handle_link(message):
@@ -74,9 +79,9 @@ def handle_link(message):
     if kp_id:
         active_stream['kp_id'] = kp_id
         active_stream['timestamp'] = time.time()
-        bot.reply_to(message, f"✅ Готово! Плеер обновится.\n👉 {HOST_URL}")
+        bot.reply_to(message, f"✅ Готово! Плеер на PS4 обновится автоматически.\n👉 {HOST_URL}")
     else:
-        bot.reply_to(message, "Не удалось найти ID.")
+        bot.reply_to(message, "Не удалось найти ID. Отправьте ссылку вида: https://www.kinopoisk.ru/film/326/")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
