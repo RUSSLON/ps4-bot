@@ -28,19 +28,20 @@ def index():
         </style>
     </head>
     <body>
-        <!-- Балансер KinoDivBox (замена Kinobox) -->
         <iframe src="https://kinodivbox.github.io/iframe?id={{ kp_id }}" allowfullscreen></iframe>
         
-        <!-- Если первый балансер будет тупить, удалите строку выше и раскомментируйте строку ниже: -->
-        <!-- <iframe src="https://kinoplayer.top/embed/kinopoisk/{{ kp_id }}" allowfullscreen></iframe> -->
-        
         <script>
-            let currentKp = '{{ kp_id }}';
+            // Сохраняем текущий ID (если его нет, строка будет пустой)
+            let currentKp = '{{ kp_id or "" }}';
+            
             setInterval(async () => {
                 try {
                     const res = await fetch('/api/status');
                     const data = await res.json();
-                    if (data.kp_id && data.kp_id !== currentKp) { window.location.reload(); }
+                    const newKp = data.kp_id || "";
+                    
+                    // Если ID изменился (в том числе если он стал пустым после /stop), перезагружаем страницу
+                    if (newKp !== currentKp) { window.location.reload(); }
                 } catch (e) {}
             }, 3000);
         </script>
@@ -66,10 +67,25 @@ def set_webhook():
     bot.set_webhook(url=f"{HOST_URL}/{TELEGRAM_TOKEN}")
     return f"Webhook настроен на: {HOST_URL}"
 
-@bot.message_handler(commands=['start'])
+# 1. КОМАНДА /start
+@bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-    bot.reply_to(message, "Отправь ссылку на фильм с Кинопоиска (или просто его ID).")
+    text = (
+        "Привет! Я бот для трансляции фильмов на PS4.\n\n"
+        "Отправь мне ссылку на фильм с Кинопоиска (или его ID).\n\n"
+        "Доступные команды:\n"
+        "/stop — принудительно остановить видео и очистить экран PS4."
+    )
+    bot.reply_to(message, text)
 
+# 2. КОМАНДА /stop (Должна быть ДО обработчика ссылок)
+@bot.message_handler(commands=['stop', 'clear'])
+def stop_stream(message):
+    active_stream['kp_id'] = None
+    active_stream['timestamp'] = 0
+    bot.reply_to(message, "🛑 Воспроизведение остановлено. Экран PS4 вернется в режим ожидания.")
+
+# 3. ОБРАБОТЧИК ССЫЛОК И ТЕКСТА
 @bot.message_handler(func=lambda msg: True)
 def handle_link(message):
     text = message.text
@@ -81,7 +97,7 @@ def handle_link(message):
         active_stream['timestamp'] = time.time()
         bot.reply_to(message, f"✅ Готово! Плеер на PS4 обновится автоматически.\n👉 {HOST_URL}")
     else:
-        bot.reply_to(message, "Не удалось найти ID. Отправьте ссылку вида: https://www.kinopoisk.ru/film/326/")
+        bot.reply_to(message, "Не удалось найти ID. Отправьте ссылку с Кинопоиска (например: https://www.kinopoisk.ru/film/326/).")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
