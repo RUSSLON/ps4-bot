@@ -4,8 +4,13 @@ import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from HdRezkaApi import HdRezkaApi
 import time
+import requests # <--- ДОБАВЛЕНО
 
-# Токен берем напрямую
+# --- ХАК ДЛЯ ОБХОДА ANUBIS ---
+requests.utils.default_user_agent = lambda: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+# -----------------------------
+
+# Дальше идет ваш токен и остальной код...
 TELEGRAM_TOKEN = "8634501513:AAH68W9fsXOQRgWTV58ko44r9yL-A2JFn0A"
 # Render сам подставит ваш адрес сайта сюда!
 HOST_URL = os.environ.get("RENDER_EXTERNAL_URL", "https://ваш-сайт.onrender.com")
